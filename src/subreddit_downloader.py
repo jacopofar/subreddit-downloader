@@ -80,16 +80,16 @@ class OutputManager:
                         permalink=sub["permalink"],
                         score=sub["score"],
                         retrieved_at=now_ts,
-                        locked=sub["locked"],
+                        locked=sub.get("locked", False),
                     )
                     if sub["is_self"]:
                         # sometimes is banned but locked=False :/
                         # https://www.reddit.com/r/redditdev/comments/7hfnew/there_is_currently_no_efficient_way_to_tell_if_a/
-                        sd["selftext"] = sub.get('selftext', "")
+                        sd["selftext"] = sub.get("selftext", "")
                     else:
                         sd["link"] = sub["url"]
                 except KeyError:
-                    logger.warning(f'Offending submission entry: {sub}')
+                    logger.warning(f"Offending submission entry: {sub}")
                     raise
                 f.write(json.dumps(sd))
                 f.write("\n")
@@ -106,11 +106,11 @@ class OutputManager:
                         retrieved_at=now_ts,
                     )
                     if c.author is not None:
-                        cd['author']=c.author.name
+                        cd["author"] = c.author.name
                     else:
-                        cd['author']='[deleted]'
+                        cd["author"] = "[deleted]"
                 except AttributeError:
-                    logger.warning(f'Offending comment entry: {str(c)}')
+                    logger.warning(f"Offending comment entry: {str(c)}")
                     raise
                 f.write(json.dumps(cd))
                 f.write("\n")
@@ -237,11 +237,7 @@ def main(
 
     # Start the gathering
     for lap in range(laps):
-        lap_message = (
-            f"Lap {lap}/{laps} completed in "
-            "{minutes:.1f}m | "
-            f"[new/tot]: {len(out_manager.comments_list)}/{out_manager.total_comments_counter}"
-        )
+        lap_message = f"Lap {lap}/{laps} completed in " "{minutes:.1f}m"
         with Timer(text=lap_message, logger=logger.info):
 
             # Reset the data already stored
@@ -271,9 +267,10 @@ def main(
 
             # Store data (submission and comments)
             out_manager.store(lap)
-
+            logger.info(f"Stored comments: {len(out_manager.comments_list)}")
         logger.info(
-            f"utc_after: {utc_after} ({datetime.fromtimestamp(utc_after).isoformat()}), utc_before: {utc_before} ({datetime.fromtimestamp(utc_before).isoformat()})"
+            f"utc_after: {utc_after} ({datetime.fromtimestamp(utc_after).isoformat()}), "
+            f"utc_before: {utc_before} ({datetime.fromtimestamp(utc_before).isoformat()})"
         )
     out_manager.store_utc_params(utc_newer=utc_after, utc_older=utc_before)
 

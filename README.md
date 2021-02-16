@@ -2,10 +2,6 @@
 
 > Download all the text comments from a subreddit
 
-<a href="https://gitmoji.carloscuesta.me">
-  <img src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=flat-square" alt="Gitmoji">
-</a>
-
 
 Use the
 script [subreddit_downloader.py](https://github.com/pistocop/reddit-downloader/blob/main/src/subreddit_downloader.py)
@@ -32,7 +28,7 @@ python src/subreddit_downloader.py AskReddit --batch-size 10 --laps 3 --reddit-i
 python src/subreddit_downloader.py AskReddit --batch-size 512 --laps 3 --reddit-id <reddit_id> --reddit-secret <reddit_secret> --reddit-username <reddit_username> --utc-after 1609459200
 
 # Build the dataset and check the results under `./dataset/` path
-python src/dataset_builder.py 
+python src/dataset_builder.py
 ```
 
 ### :information_source: Where I can get the reddit parameters?
