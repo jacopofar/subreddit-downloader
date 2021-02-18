@@ -1,39 +1,12 @@
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime
-import json
-import os
-from pathlib import Path
 
 import asyncpg
+from loguru import logger
 
+from src.ingest_helper import Submission, Comment, insertion_chunks
 
-@dataclass
-class Submission:
-    author: str
-    id: str
-    created_utc: int
-    title: str
-    retrieved_at: int
-    score: int
-    permalink: str
-    locked: bool
-    selftext: str
-    link: str
-    subreddit: str
-
-
-@dataclass
-class Comment:
-    id: str
-    author: str
-    body: str
-    created_utc: int
-    parent_id: str
-    permalink: str
-    score: int
-    retrieved_at: int
-    subreddit: str
+# currently it takes 36 minutes to ingest 4.9M comments
 
 
 async def get_connection():
@@ -123,7 +96,7 @@ async def upsert_submissions(conn, submissions: dict[str, Submission]):
     await stm.executemany(subs)
 
 
-async def upsert_comments(conn, comments):
+async def upsert_comments(conn, comments: dict[str, Comment]):
     stm = await conn.prepare(
         """
          INSERT INTO comment AS old (
@@ -167,76 +140,15 @@ async def upsert_comments(conn, comments):
     await stm.executemany(coms)
 
 
-def merge_submission(submissions: dict[str, Submission], obj, sub_name: str):
-    if (
-        obj["id"] in submissions
-        and submissions[obj["id"]].retrieved_at > obj["retrieved_at"]
-    ):
-        return
-    submissions[obj["id"]] = Submission(
-        id=obj["id"],
-        author=obj["author"],
-        created_utc=obj["created_utc"],
-        title=obj["title"],
-        retrieved_at=obj["retrieved_at"],
-        score=obj["score"],
-        permalink=obj["permalink"],
-        locked=obj["locked"],
-        selftext=obj.get("selftext"),
-        link=obj.get("link"),
-        subreddit=sub_name,
-    )
-
-
-def merge_comment(comments: dict[str, Comment], obj, sub_name: str):
-    if obj["id"] in comments and comments[obj["id"]].retrieved_at > obj["retrieved_at"]:
-        return
-    comments[obj["id"]] = Comment(
-        id=obj["id"],
-        author=obj["author"],
-        created_utc=obj["created_utc"],
-        retrieved_at=obj["retrieved_at"],
-        score=obj["score"],
-        permalink=obj["permalink"],
-        body=obj["body"],
-        parent_id=obj["parent_id"],
-        subreddit=sub_name,
-    )
-
-
-def insertion_chunks(chunk_size: int = 10000):
-    submissions = {}
-    comments = {}
-
-    for root, _dirs, files in os.walk("data"):
-        print(f"Processing folder {root}")
-        for fname in files:
-            if not fname.endswith(".jsonl"):
-                continue
-            subname = root.split("/")[1]
-            with open(Path(root) / fname) as fr:
-                if root.endswith("submissions"):
-                    for line in fr:
-                        merge_submission(submissions, json.loads(line), subname)
-                elif root.endswith("comments"):
-                    for line in fr:
-                        merge_comment(comments, json.loads(line), subname)
-                else:
-                    raise ValueError(f"Unknown file {root} -> {fname}")
-            if len(submissions) + len(comments) > chunk_size:
-                print("pending size reached, will store in the DB...")
-                yield submissions, comments
-                submissions = {}
-                comments = {}
-    # generate the remaining elements
-    yield submissions, comments
-
-
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     conn = loop.run_until_complete(get_connection())
     loop.run_until_complete(create_tables(conn))
-
+    total_subs, total_coms = 0, 0
     for subs, coms in insertion_chunks():
+        total_subs += len(subs)
+        total_coms += len(coms)
         loop.run_until_complete(upsert_submissions(conn, subs))
+        logger.info(f'Submissions ingested so far: {total_subs}')
         loop.run_until_complete(upsert_comments(conn, coms))
+        logger.info(f'Comments ingested so far: {total_coms}')

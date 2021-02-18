@@ -27,8 +27,6 @@ python src/subreddit_downloader.py AskReddit --batch-size 10 --laps 3 --reddit-i
 # Download the News comments after 1 January 2021
 python src/subreddit_downloader.py AskReddit --batch-size 512 --laps 3 --reddit-id <reddit_id> --reddit-secret <reddit_secret> --reddit-username <reddit_username> --utc-after 1609459200
 
-# Build the dataset and check the results under `./dataset/` path
-python src/dataset_builder.py
 ```
 
 ### :information_source: Where I can get the reddit parameters?

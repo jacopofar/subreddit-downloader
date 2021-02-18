@@ -6,6 +6,6 @@ PyYAML==5.4.1
 prawcore==1.5.0
 pushshift.py==0.1.2
 # experimental psycopg3, to live on the edge!
-# not working at the moment
-# git+https://github.com/psycopg/psycopg3.git#subdirectory=psycopg3
+git+https://github.com/psycopg/psycopg3.git#subdirectory=psycopg3
 asyncpg==0.22.0
+psycopg2-binary==2.8.6
