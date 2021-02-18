@@ -1,7 +1,8 @@
 from datetime import datetime
 
-import psycopg2
 from loguru import logger
+import psycopg2
+from psycopg2.extras import execute_values
 
 from src.ingest_helper import Submission, Comment, insertion_chunks
 
@@ -56,7 +57,7 @@ def upsert_submissions(conn, submissions: dict[str, Submission]):
             locked,
             selftext,
             link
-         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+         ) VALUES %s
         ON CONFLICT(id) DO UPDATE SET
             author = EXCLUDED.author,
             subreddit = EXCLUDED.subreddit,
@@ -88,7 +89,7 @@ def upsert_submissions(conn, submissions: dict[str, Submission]):
             ]
         )
     with conn.cursor() as cur:
-        cur.executemany(stm, subs)
+        execute_values(cur, stm, subs)
     conn.commit()
 
 
@@ -104,7 +105,7 @@ def upsert_comments(conn, comments: dict[str, Comment]):
             permalink,
             score,
             retrieved_at
-         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+         ) VALUES %s
         ON CONFLICT(id) DO UPDATE SET
             author = EXCLUDED.author,
             subreddit = EXCLUDED.subreddit,
@@ -133,7 +134,7 @@ def upsert_comments(conn, comments: dict[str, Comment]):
             ]
         )
     with conn.cursor() as cur:
-        cur.executemany(stm, coms)
+        execute_values(cur, stm, coms)
     conn.commit()
 
 if __name__ == "__main__":
