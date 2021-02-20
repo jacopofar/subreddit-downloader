@@ -4,15 +4,13 @@ from datetime import datetime
 import asyncpg
 from loguru import logger
 
-from src.ingest_helper import Submission, Comment, insertion_chunks
+from src.ingest_helper import Submission, Comment, insertion_chunks, CONNECTION_STRING
 
 # currently it takes 36 minutes to ingest 4.9M comments
 
 
 async def get_connection():
-    return await asyncpg.connect(
-        dsn="postgres://postgres:mysecretpassword@127.0.0.1:5442/reddit"
-    )
+    return await asyncpg.connect(dsn=CONNECTION_STRING)
 
 
 async def create_tables(conn):
@@ -149,6 +147,6 @@ if __name__ == "__main__":
         total_subs += len(subs)
         total_coms += len(coms)
         loop.run_until_complete(upsert_submissions(conn, subs))
-        logger.info(f'Submissions ingested so far: {total_subs}')
+        logger.info(f"Submissions ingested so far: {total_subs}")
         loop.run_until_complete(upsert_comments(conn, coms))
-        logger.info(f'Comments ingested so far: {total_coms}')
+        logger.info(f"Comments ingested so far: {total_coms}")

@@ -3,17 +3,17 @@ from datetime import datetime
 import psycopg3
 from loguru import logger
 
-from src.ingest_helper import Submission, Comment, insertion_chunks
+from src.ingest_helper import Submission, Comment, insertion_chunks, CONNECTION_STRING
 
 
 def get_connection():
-    return psycopg3.connect("postgres://postgres:mysecretpassword@127.0.0.1:5442/reddit")
+    return psycopg3.connect(CONNECTION_STRING)
 
 
 def create_tables(conn):
     with conn.cursor() as cur:
         cur.execute(
-        """
+            """
         CREATE TABLE IF NOT EXISTS submission (
             id           TEXT PRIMARY KEY,
             subreddit    TEXT,
@@ -39,7 +39,7 @@ def create_tables(conn):
             retrieved_at TIMESTAMP WITH TIME ZONE
         );
      """
-    )
+        )
 
 
 def upsert_submissions(conn, submissions: dict[str, Submission]):
@@ -141,14 +141,15 @@ def upsert_comments(conn, comments: dict[str, Comment]):
             cur.execute(stm, com, prepare=True)
     conn.commit()
 
+
 if __name__ == "__main__":
-    conn =get_connection()
+    conn = get_connection()
     create_tables(conn)
     total_subs, total_coms = 0, 0
     for subs, coms in insertion_chunks():
         total_subs += len(subs)
         total_coms += len(coms)
         upsert_submissions(conn, subs)
-        logger.info(f'Submissions ingested so far: {total_subs}')
+        logger.info(f"Submissions ingested so far: {total_subs}")
         upsert_comments(conn, coms)
-        logger.info(f'Comments ingested so far: {total_coms}')
+        logger.info(f"Comments ingested so far: {total_coms}")

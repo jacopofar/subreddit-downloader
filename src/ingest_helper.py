@@ -7,6 +7,10 @@ from time import time
 
 from loguru import logger
 
+# usually loaded form environment variables
+# for the sake of ease of use here is hardcoded
+CONNECTION_STRING = "postgres://postgres:mysecretpassword@127.0.0.1:5442/reddit"
+
 
 @dataclass
 class Submission:
@@ -98,11 +102,13 @@ def insertion_chunks(chunk_size: int = 50000):
                 yield submissions, comments
                 spent = time() - start_time
                 insertion_times.append(spent)
-                logger.info(f'DB write took {spent:.0f} seconds')
+                logger.info(f"DB write took {spent:.0f} seconds")
                 submissions = {}
                 comments = {}
-    logger.info(f'Average chunk insertion time: {statistics.mean(insertion_times):.1f}')
-    logger.info(f'Median chunk insertion time: {statistics.median(insertion_times):.1f}')
-    logger.info(f'Standard deviation: {statistics.stdev(insertion_times):.1f}')
+    logger.info(f"Average chunk insertion time: {statistics.mean(insertion_times):.1f}")
+    logger.info(
+        f"Median chunk insertion time: {statistics.median(insertion_times):.1f}"
+    )
+    logger.info(f"Standard deviation: {statistics.stdev(insertion_times):.1f}")
     # the remaining elements
     yield submissions, comments
