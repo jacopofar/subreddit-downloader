@@ -4,7 +4,7 @@ Download all the text comments from a subreddit, and load them into a Postgres i
 
 The Reddit downloader is based on the [original from pistocop](https://github.com/pistocop/reddit-downloader), refer to the original page for further details. This repository uses that data to demonstrate different methods to insert data in postgres.
 
-This version stores some fields to be more compact and allow an easier merge
+This version stores some specific fields to take less space and allow an easier merge with existing data.
 
 ## Usage
 
@@ -88,8 +88,12 @@ Options:
 
 This repository includes different scripts to ingest all the data in a Postgres instance, allowing for an incremental update of an existing database.
 
+The Makefile contains a script to create and destroy a suitable dockerized postgres instance.
+
 No parameters are required, for example:
 
     venv/bin/python3 src/ingest_into_postgres_psycopg3_with_copy.py
+
+ingests the data into posgres, taking care of creating the tables and populating them, integrating with existing data and handling duplicates in the input.
 
 The different scripts do the same thing using different techniques.
