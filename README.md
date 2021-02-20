@@ -1,35 +1,32 @@
 # subreddit-text-downloader
 
-> Download all the text comments from a subreddit
+Download all the text comments from a subreddit, and load them into a Postgres instance.
 
+The Reddit downloader is based on the [original from pistocop](https://github.com/pistocop/reddit-downloader), refer to the original page for further details. This repository uses that data to demonstrate different methods to insert data in postgres.
 
-Use the
-script [subreddit_downloader.py](https://github.com/pistocop/reddit-downloader/blob/main/src/subreddit_downloader.py)
-multiple times to download the data, <br>
-and then run the
-script [dataset_builder.py](https://github.com/pistocop/reddit-downloader/blob/main/src/dataset_builder.py) for create a
-unique dataset.
+This version stores some fields to be more compact and allow an easier merge
 
-More info on [website](https://www.pistocop.dev/posts/subreddit_downloader/).
-
-## :rocket: Usage
+## Usage
 
 Basic usage to download submissions and relative comments from
 subreddit [AskReddit](https://www.reddit.com/r/AskReddit/) and [News](https://www.reddit.com/r/news/):
 
 ```shell
+# Create a virtualkenv
+python3 -m venv venv
+
 # Install the dependencies
-pip install -r requirements.txt
+venv/bin/python3 -m pip install -r requirements.txt
 
 # Download the AskReddit comments of the last 30 submissions
-python src/subreddit_downloader.py AskReddit --batch-size 10 --laps 3 --reddit-id <reddit_id> --reddit-secret <reddit_secret> --reddit-username <reddit_username>
+venv/bin/python3 src/subreddit_downloader.py AskReddit --batch-size 10 --laps 3 --reddit-id <reddit_id> --reddit-secret <reddit_secret> --reddit-username <reddit_username>
 
 # Download the News comments after 1 January 2021
-python src/subreddit_downloader.py AskReddit --batch-size 512 --laps 3 --reddit-id <reddit_id> --reddit-secret <reddit_secret> --reddit-username <reddit_username> --utc-after 1609459200
+venv/bin/python3 src/subreddit_downloader.py AskReddit --batch-size 512 --laps 3 --reddit-id <reddit_id> --reddit-secret <reddit_secret> --reddit-username <reddit_username> --utc-after 1609459200
 
 ```
 
-### :information_source: Where I can get the reddit parameters?
+### Where I can get the reddit parameters?
 
 - Parameters indicated with `<...>` on the previous script
 - Official [Reddit guide](https://github.com/reddit-archive/reddit/wiki/OAuth2)
@@ -41,24 +38,7 @@ python src/subreddit_downloader.py AskReddit --batch-size 512 --laps 3 --reddit-
 | `reddit_secret` | The secret generated from the apps page | Copy the value as showed [here](https://github.com/reddit-archive/reddit/wiki/OAuth2#getting-started) | 9KEUOE7pi8dsjs9507asdeurowGCcg|
 | `reddit_username` | The reddit account name| The name you use for log in | pistoSniffer |
 
-## :book: Glossary
 
-- _subreddit_: section of reddit website focused on a particular topic
-
-- _submission_: the post that appear in each subreddit. When you open a subreddit page, all the posts you see. Each
-  submission has a tree of _comments_
-
-- _comment_: text wrote by a reddit user under a _submission_ inside a _subreddit_
-    - The main goal of this repository is sto gather the _comments_ belong to the _subreddit_
-
-## :writing_hand: Notes
-
-- Under the hood the script use [pushshift](https://pushshift.io/api-parameters/) to gather submissions id,
-  and [praw](https://praw.readthedocs.io/en/latest/)
-  for collect the submissions comments
-    - With this approach we require fewer data to [pushshift](https://pushshift.io/api-parameters/)
-    - Due to the usage of [praw](https://praw.readthedocs.io/en/latest/) API, the reddit credentials are required
-- More info about the `subreddit_downloader.py` script under the `--help` command:
 
 ```bash
 python src/subreddit_downloader.py --help
@@ -104,14 +84,12 @@ Options:
   --help                          Show this message and exit.
 ```
 
-## :zzz: TODO
+## Ingest
 
-**dataset_builder.py**
+This repository includes different scripts to ingest all the data in a Postgres instance, allowing for an incremental update of an existing database.
 
-- [ ] store some dataset info (subreddit, max/min utc/human, n^ lines)
+No parameters are required, for example:
 
-**subreddit_downloader.py**
+    venv/bin/python3 src/ingest_into_postgres_psycopg3_with_copy.py
 
-- [ ] store/log the utc and human datetime
-- [ ] use case: download all data from X datetime until now
-    - [ ] early stopping if no new data fetched
+The different scripts do the same thing using different techniques.
