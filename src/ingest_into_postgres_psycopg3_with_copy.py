@@ -29,7 +29,7 @@ def create_tables(conn):
             created_utc  TIMESTAMP WITH TIME ZONE,
             title        TEXT,
             retrieved_at TIMESTAMP WITH TIME ZONE,
-            score        SMALLINT,
+            score        INTEGER,
             permalink    TEXT,
             LOCKED       BOOLEAN,
             selftext     TEXT,
@@ -43,7 +43,7 @@ def create_tables(conn):
             created_utc  TIMESTAMP WITH TIME ZONE,
             parent_id    TEXT,
             permalink    TEXT,
-            score        SMALLINT,
+            score        INTEGER,
             retrieved_at TIMESTAMP WITH TIME ZONE
         );
      """

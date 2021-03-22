@@ -1,9 +1,9 @@
 loguru==0.5.3
 typer==0.3.2
-praw==7.1.4
+praw==7.2.0
 codetiming==1.3.0
 PyYAML==5.4.1
-prawcore==1.5.0
+prawcore==2.0.0
 pushshift.py==0.1.2
 # experimental psycopg3, to live on the edge!
 git+https://github.com/psycopg/psycopg3.git#subdirectory=psycopg3

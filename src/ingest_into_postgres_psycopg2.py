@@ -2,7 +2,7 @@ from datetime import datetime
 
 from loguru import logger
 import psycopg2
-from psycopg2.extras import execute_values
+from psycopg2.extras import execute_batch, execute_values
 
 from src.ingest_helper import Submission, Comment, insertion_chunks, CONNECTION_STRING
 
@@ -22,7 +22,7 @@ def create_tables(conn):
             created_utc  TIMESTAMP WITH TIME ZONE,
             title        TEXT,
             retrieved_at TIMESTAMP WITH TIME ZONE,
-            score        SMALLINT,
+            score        INTEGER,
             permalink    TEXT,
             LOCKED       BOOLEAN,
             selftext     TEXT,
@@ -36,7 +36,7 @@ def create_tables(conn):
             created_utc  TIMESTAMP WITH TIME ZONE,
             parent_id    TEXT,
             permalink    TEXT,
-            score        SMALLINT,
+            score        INTEGER,
             retrieved_at TIMESTAMP WITH TIME ZONE
         );
      """
@@ -95,6 +95,7 @@ def upsert_submissions(conn, submissions: dict[str, Submission]):
 
 def upsert_comments(conn, comments: dict[str, Comment]):
     stm = """
+         PREPARE stmt AS
          INSERT INTO comment AS old (
             id,
             subreddit,
@@ -105,7 +106,7 @@ def upsert_comments(conn, comments: dict[str, Comment]):
             permalink,
             score,
             retrieved_at
-         ) VALUES %s
+         ) VALUES ($1, $2, $3,$4, $5, $6, $7, $8, $9)
         ON CONFLICT(id) DO UPDATE SET
             author = EXCLUDED.author,
             subreddit = EXCLUDED.subreddit,
@@ -134,7 +135,10 @@ def upsert_comments(conn, comments: dict[str, Comment]):
             ]
         )
     with conn.cursor() as cur:
-        execute_values(cur, stm, coms)
+        cur.execute(stm)
+        execute_batch(cur, "EXECUTE stmt (%s, %s, %s, %s, %s, %s, %s, %s, %s)", coms)
+        cur.execute("DEALLOCATE stmt")
+
     conn.commit()
 
 
